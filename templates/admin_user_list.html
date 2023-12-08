@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin User List</title>
-    <!-- Bootstrap CSS -->
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
@@ -30,7 +33,32 @@
                         <td>{{ user.status }}</td>
                         <td>
                             <a href="/admin/user_action/{{ user._id }}/ban" class="btn btn-danger">Ban</a>
-                            <a href="/admin/user_action/{{ user._id }}/warn" class="btn btn-warning">Warn</a>
+                            <!-- Button to trigger warning message modal -->
+                            <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#warnModal{{ user._id }}">
+                                Warn
+                            </button>
+                            <!-- Warning message modal -->
+                            <div class="modal fade" id="warnModal{{ user._id }}" tabindex="-1" role="dialog" aria-labelledby="warnModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="warnModalLabel">Warn User: {{ user.username }}</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form action="/admin/user_action/{{ user._id }}/warn" method="POST">
+                                                <div class="form-group">
+                                                    <label for="warnMessage">Warning Message</label>
+                                                    <input type="text" class="form-control" id="warnMessage" name="warn_message" placeholder="Enter warning message" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-warning">Submit</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}
