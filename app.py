@@ -30,6 +30,7 @@ ADMIN_PASSWORD = 'admin123'
 @app.route('/')
 def index():
     user_document = None
+    warning_message = None
 
     if 'username' in session:
         username = session['username']
@@ -42,15 +43,13 @@ def index():
         # Check for warning status and show appropriate message if warned
         if user_document and user_document.get('status') == 'warned':
             warning_message = 'You have received a warning. Please adhere to the community guidelines.'
-            return render_template('index.html', user_document=user_document, warning_message=warning_message)
-        
-        # Proceed to the index page if the user is not banned or warned
+
+        # Fetch posts irrespective of the user's status
         posts = posts_collection.find()
-        return render_template('index.html', posts=posts, user_document=user_document)
+        return render_template('index.html', posts=posts, user_document=user_document, warning_message=warning_message)
     else:
         posts = posts_collection.find()
         return render_template('home.html', posts=posts)
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -565,16 +564,20 @@ def admin_user_list():
     all_users = users_collection.find()
     return render_template('admin_user_list.html', users=all_users)
 
-@app.route('/admin/user_action/<user_id>/<action>')
+# Route to perform admin actions (ban or warn) on users
+@app.route('/admin/user_action/<user_id>/<action>', methods=['GET', 'POST'])
 def admin_user_action(user_id, action):
     if action == 'ban':
         # Implement user ban functionality
         users_collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'status': 'banned'}})
     elif action == 'warn':
-        # Implement user warn functionality
-        users_collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'status': 'warned'}})
-
+        if request.method == 'POST':
+            warn_message = request.form.get('warn_message')
+            # Update the user's status to 'warned' and save the warning message
+            users_collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'status': 'warned', 'warn_message': warn_message}})
+            return redirect(url_for('admin_user_list'))
     return redirect(url_for('admin_user_list'))
+
 
 if __name__ == '__main__':
     # from waitress import serve #web servers
