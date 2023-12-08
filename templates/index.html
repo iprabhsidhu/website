@@ -76,18 +76,9 @@
        </style>
 
     <!-- header end -->
-    {% if warning_message %}
-        <div class="warning-message">
-            <p>{{ warning_message }}</p>
-            <span class="close-button" onclick="dismissWarning()">X</span>
-        </div>
-        <script>
-            function dismissWarning() {
-                document.querySelector('.warning-message').style.display = 'none';
-            }
-        </script>
-    {% endif %}
     <main>
+    
+       
         {% for post in posts|reverse %}
             <a href="{{ url_for('redirect_page', post_id=post['_id']) }}" class="projcard-link">
 		
