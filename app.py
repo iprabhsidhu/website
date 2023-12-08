@@ -10,46 +10,7 @@ from passlib.hash import bcrypt
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from flaskwebgui import FlaskUI
 
-# import pymysql
-
-app = Flask(__name__)
-
-app.secret_key = 'xyz'
-connection_string = 'mongodb+srv://hackers_co:K9mDEAed8NYtQeLd@blog.xk7q6yw.mongodb.net/'
-client = MongoClient(connection_string)
-db = client["webdb"]  # Update with your MongoDB database name
-users_collection = db["users"]
-posts_collection = db["posts"]
-comments_collection = db["comment"]
-ADMIN_USERNAME = 'admin'
-ADMIN_PASSWORD = 'admin123'
-
-########################################-------------------------------------------------
-@app.route('/')
-def index():
-    user_document = None
-    warning_message = None
-
-    if 'username' in session:
-        username = session['username']
-        user_document = users_collection.find_one({'username': username})
-
-        if user_document and user_document.get('status') == 'banned':
-            # Redirect to banned message if the user is banned
-            return render_template('banned_message.html')
-
-        # Check for warning status and show appropriate message if warned
-        if user_document and user_document.get('status') == 'warned':
-            warning_message = 'You have received a warning. Please adhere to the community guidelines.'
-
-        # Fetch posts irrespective of the user's status
-        posts = posts_collection.find()
-        return render_template('index.html', posts=posts, user_document=user_document, warning_message=warning_message)
-    else:
-        posts = posts_collection.find()
-        return render_template('home.html', posts=posts)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -112,6 +73,7 @@ def add_post():
         if 'username' in session:
             title = request.form['title']
             content = request.form['content']
+            uploaded_files = request.files.getlist('file')
 
             try:
                 # Fetch user ID associated with the current session
@@ -123,8 +85,20 @@ def add_post():
                 # Insert the post into MongoDB
                 content = extract_text_and_images(content)
 
-                posts_collection.insert_one({'user_id': user_id, 'title': title, 'content': content,'user':session['username'], 'date': current_india_time.strftime('%d %B %Y')  })
-
+                # posts_collection.insert_one({'user_id': user_id, 'title': title, 'content': content,'user':session['username'], 'date': current_india_time.strftime('%d %B %Y')  })
+                post_id = posts_collection.insert_one({
+                    'user_id': user_id,
+                    'title': title,
+                    'content': content,
+                    'user': session['username'],
+                    'date': current_india_time.strftime('%d %B %Y'),
+                    'images': [] 
+                }).inserted_id
+                for file in uploaded_files:
+                    if file:
+                        filename = secure_filename(file.filename)
+                        file_id = grid_fs.put(file, filename=filename, post_id=post_id)
+                        posts_collection.update_one({'_id': post_id}, {'$push': {'images': file_id}})
                 return redirect(url_for('index'))
             except Exception as e:
                 print("Error:", e)
@@ -133,6 +107,18 @@ def add_post():
             return redirect(url_for('login'))
     return render_template('add_post.html')
 ########################################-------------------------------------------------
+from flask import send_file
+
+@app.route('/get_image/<image_id>')
+def get_image(image_id):
+    # Retrieve the image from GridFS based on the image_id
+    image_data = grid_fs.get(ObjectId(image_id))
+
+    # Set the appropriate content type
+    response = app.make_response(image_data.read())
+    response.headers['Content-Type'] = 'image/jpeg'  # Adjust the content type based on your images
+
+    return response
 ########################################-------------------------------------------------
 def generate_otp():
     return str(random.randint(1000, 9999))
@@ -265,8 +251,10 @@ def redirect_page(post_id):
 
     # Fetch comments for the post
     comments = comments_collection.find({'post_id': post_id})
+    files = grid_fs.find()
+    # return render_template('dashboard.html', )
 
-    return render_template('dashboard.html', post=post, comments=comments)
+    return render_template('dashboard.html', post=post,files=files, comments=comments)
 
    #u = None
     print(session.get('username'))#'username'])
@@ -283,6 +271,22 @@ def redirect_page(post_id):
     else:
         return render_template('dashboard.html', comments=comments, post=post)
     # post ={'_id': post_id}
+
+@app.route('/download/<file_id>')
+def download_file(file_id):
+    try:
+        # Retrieve the file from GridFS based on the file_id
+        file = grid_fs.get(ObjectId(file_id))
+        # print(file)
+        mime_type = file.content_type if file.content_type else 'application/octet-stream'
+
+        # Set the appropriate content type
+        response = send_file(file, as_attachment=True, mimetype=mime_type, download_name=file.filename)
+
+        return response
+    except Exception as e:
+        print("Error:", e)
+        return "File not found"
 
 @app.route('/like_post/<post_id>', methods=['POST'])
 def like_post(post_id):
