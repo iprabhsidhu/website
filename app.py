@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session,g
+from flask import Flask, render_template, request, redirect, url_for, session, g, jsonify
+from functools import wraps
 from pymongo import MongoClient
 from bson import ObjectId
 from datetime import datetime
@@ -9,42 +10,7 @@ from passlib.hash import bcrypt
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from flask import jsonify
-from werkzeug.utils import secure_filename
-from gridfs import GridFS
 
-# import pymysql
-
-app = Flask(__name__)
-
-app.secret_key = 'xyz'
-connection_string = 'mongodb+srv://hackers_co:K9mDEAed8NYtQeLd@blog.xk7q6yw.mongodb.net/'
-client = MongoClient(connection_string)
-db = client["webdb"]  # Update with your MongoDB database name
-users_collection = db["users"]
-posts_collection = db["posts"]
-comments_collection = db["comment"]
-grid_fs = GridFS(db)
-########################################-------------------------------------------------
-@app.route('/')
-def index():
-    user_document = None 
-     # Initialize user_document as None by default
-     
-    if 'username' in session:
-        try:
-            # Fetch user document from MongoDB
-            username = session['username']
-            posts = posts_collection.find()
-            user_document = users_collection.find_one({'username': username})
-        except Exception as e:
-            print("Error:", e)
-            return "An error occurred while fetching user details."
-        posts = posts_collection.find()  # Fetch posts
-        return render_template('index.html', posts=posts, user_document=user_document)
-    else :
-        posts = posts_collection.find()#{}, {'_id': 0}
-        return render_template('home.html',posts=posts)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -540,26 +506,86 @@ def reset_password():
     if request.method == 'POST':
         new_password = request.form['new_password']
         new_password = bcrypt.hash(new_password)
-
-
         # Update the user's password in the database
         if 'reset_email' in session:
             users_collection.update_one({'email': session['reset_email']}, {'$set': {'password': new_password}})
-
             # Clear the session variables
             session.pop('reset_email', None)
             session.pop('reset_otp', None)
-
             return redirect(url_for('login'))
-
     return render_template('reset_password.html')
-
-
-
     # /////////////////////
 
-if __name__ == '__main__':
-    # from waitress import serve
-    # serve(app, host="0.0.0.0", port=8080)
+#admin features
+@app.route('/admin_login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == "i" and password == "i":
+            session['admin'] = True
+            return redirect(url_for('admin_panel'))
+        #else:
+        #   return render_template('admin_login.html', message='Invalid credentials. Please try again.')
+    return render_template('admin_login.html', message='')
 
-    app.run(debug=True, port=5000)
+@app.route('/admin')
+def admin_panel():
+    # Fetch all users from the database
+    all_users = users_collection.find()
+
+    # Fetch all posts from the database
+    all_posts = posts_collection.find()
+
+    # Fetch all comments from the database
+    all_comments = comments_collection.find()
+
+    return render_template('admin_panel.html', users=all_users, posts=all_posts, comments=all_comments)
+
+@app.route('/admin/logs', methods=['GET', 'POST'])
+def admin_logs():
+    if request.method == 'POST':
+        log_type = request.form.get('log_type')
+
+        if log_type == 'registration':
+            # Fetch registration logs (if available)
+            registration_logs = logs_collection.find({'log_type': 'registration'})
+            return render_template('admin_logs.html', log_type='Registration Logs', logs=registration_logs)
+        elif log_type == 'posting':
+            # Fetch posting logs (if available)
+            posting_logs = logs_collection.find({'log_type': 'posting'})
+            return render_template('admin_logs.html', log_type='Posting Logs', logs=posting_logs)
+        elif log_type == 'comments':
+            # Fetch comments logs (if available)
+            comments_logs = logs_collection.find({'log_type': 'comments'})
+            return render_template('admin_logs.html', log_type='Comments Logs', logs=comments_logs)
+
+    return render_template('admin_logs.html')
+
+@app.route('/admin/user_list')
+def admin_user_list():
+    # Fetch all users from the database
+    all_users = users_collection.find()
+    return render_template('admin_user_list.html', users=all_users)
+
+# Route to perform admin actions (ban or warn) on users
+@app.route('/admin/user_action/<user_id>/<action>', methods=['GET', 'POST'])
+def admin_user_action(user_id, action):
+    if action == 'ban':
+        # Implement user ban functionality
+        users_collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'status': 'banned'}})
+    elif action == 'warn':
+        if request.method == 'POST':
+            warn_message = request.form.get('warn_message')
+            # Update the user's status to 'warned' and save the warning message
+            users_collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'status': 'warned', 'warn_message': warn_message}})
+            return redirect(url_for('admin_user_list'))
+    return redirect(url_for('admin_user_list'))
+
+
+if __name__ == '__main__':
+    # from waitress import serve #web servers
+    # serve(app, host="0.0.0.0", port=8080) #web servers
+    #ui = FlaskUI(app, width=500, height=500) #only use if making application from flask instead of website
+    #ui.run() #only use if making application from flask instead of website
+    app.run(debug=True, port=5000) #only for testing/localhost

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Logs</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Admin Logs - {{ log_type }}</h1>
+
+        <!-- Log Entries Section -->
+        <div class="card">
+            <div class="card-header">
+                Logs
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for log in logs %}
+                        <li class="list-group-item">{{ log.entry }}</li>
+                        <!-- Display other log attributes as needed -->
+                    {% endfor %}
+                    {% if logs|length == 0 %}
+                        <li class="list-group-item">No logs available for {{ log_type }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <a href="/admin" class="btn btn-secondary mt-3">Back to Admin Panel</a>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

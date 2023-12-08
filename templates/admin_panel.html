@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Welcome to the Admin Panel</h1>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <a href="/admin/logs" class="btn btn-primary btn-block">View Logs</a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="/admin/user_list" class="btn btn-success btn-block">View User List</a>
+            </div>
+            <!-- Add more buttons as needed -->
+        </div>
+        </div>
+        <h3>Logs:</h3>
+        <!-- Users Section -->
+        <div class="card mb-3">
+            <div class="card-header">
+                Users
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">All Users:</h5>
+                <ul class="list-group">
+                    {% for user in users %}
+                        <li class="list-group-item">{{ user.username }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Posts Section -->
+        <div class="card mb-3">
+            <div class="card-header">
+                Posts
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">All Posts:</h5>
+                <ul class="list-group">
+                    {% for post in posts %}
+                        <li class="list-group-item">{{ post.title }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="card mb-3">
+            <div class="card-header">
+                Comments
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">All Comments:</h5>
+                <ul class="list-group">
+                    {% for comment in comments %}
+                        <li class="list-group-item">{{ comment.content }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
