@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Posts</title>
+</head>
+<body>
+    <h1>Manage Posts</h1>
+    <div class="link-box">
+        <a href="{{ url_for('admin') }}">Admin Panel</a>
+    </div>
+        <a href="{{ url_for('admin_logs') }}">Admin Logs</a>
+    </div>
+    <div class="link-box">
+        <a href="{{ url_for('admin_user_list') }}">User List</a>
+    </div>    
+    <table border="1">
+        <tr>
+            <th>Post ID</th>
+            <th>Title</th>
+            <th>Content</th>
+            <th>Posted By</th>
+            <th>Action</th>
+        </tr>
+        {% for post in posts %}
+        <tr>
+            <td>{{ post._id }}</td>
+            <td>{{ post.title }}</td>
+            <td>{{ post.content }}</td>
+            <td>{{ post.user }}</td>
+            <td>
+                <form action="/admin/delete_post/{{ post._id }}" method="post">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

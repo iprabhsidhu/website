@@ -15,7 +15,7 @@ from gridfs import GridFS
 
 # import pymysql
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder=templates)
 
 app.secret_key = 'xyz'
 connection_string = 'mongodb+srv://hackers_co:K9mDEAed8NYtQeLd@blog.xk7q6yw.mongodb.net/'
@@ -24,27 +24,32 @@ db = client["webdb"]  # Update with your MongoDB database name
 users_collection = db["users"]
 posts_collection = db["posts"]
 comments_collection = db["comment"]
+logs_collection = db['logs']
 grid_fs = GridFS(db)
 ########################################-------------------------------------------------
 @app.route('/')
 def index():
-    user_document = None 
-     # Initialize user_document as None by default
-     
+    user_document = None
+    warning_message = None
+
     if 'username' in session:
-        try:
-            # Fetch user document from MongoDB
-            username = session['username']
-            posts = posts_collection.find()
-            user_document = users_collection.find_one({'username': username})
-        except Exception as e:
-            print("Error:", e)
-            return "An error occurred while fetching user details."
-        posts = posts_collection.find()  # Fetch posts
-        return render_template('index.html', posts=posts, user_document=user_document)
-    else :
-        posts = posts_collection.find()#{}, {'_id': 0}
-        return render_template('home.html',posts=posts)
+        username = session['username']
+        user_document = users_collection.find_one({'username': username})
+
+        if user_document and user_document.get('status') == 'banned':
+            # Redirect to banned message if the user is banned
+            return render_template('banned_message.html')
+
+        # Check for warning status and show appropriate message if warned
+        if user_document and user_document.get('status') == 'warned':
+            warning_message = 'You have received a warning. Please adhere to the community guidelines.'
+
+        # Fetch posts irrespective of the user's status
+        posts = posts_collection.find()
+        return render_template('index.html', posts=posts, user_document=user_document, warning_message=warning_message)
+    else:
+        posts = posts_collection.find()
+        return render_template('home.html', posts=posts)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -119,6 +124,55 @@ def add_post():
                 # Insert the post into MongoDB
                 content = extract_text_and_images(content)
 
+                # Insert post details into MongoDB
+                post_id = posts_collection.insert_one({
+                    'user_id': user_id,
+                    'title': title,
+                    'content': content,
+                    'user': session['username'],
+                    'date': current_india_time.strftime('%d %B %Y'),
+                    'images': [] 
+                }).inserted_id
+
+                # Handle uploaded files
+                for file in uploaded_files:
+                    if file:
+                        filename = secure_filename(file.filename)
+                        file_id = grid_fs.put(file, filename=filename, post_id=post_id)
+                        posts_collection.update_one({'_id': post_id}, {'$push': {'images': file_id}})
+                
+                # Log the posting activity after the post is successfully added
+                log_activity = f"User '{session['username']}' added a new post titled '{title}'"
+                log_entry = {'timestamp': current_india_time, 'activity': log_activity}
+                logs_collection.insert_one(log_entry)
+
+                return redirect(url_for('index'))
+            except Exception as e:
+                print("Error:", e)
+                return "An error occurred while adding the post."
+        else:
+            return redirect(url_for('login'))
+    return render_template('add_post.html')
+
+'''
+@app.route('/add_post', methods=['GET', 'POST'])
+def add_post():
+    if request.method == 'POST':
+        if 'username' in session:
+            title = request.form['title']
+            content = request.form['content']
+            uploaded_files = request.files.getlist('file')
+
+            try:
+                # Fetch user ID associated with the current session
+                user = users_collection.find_one({'username': session['username']})
+                user_id = user['_id']
+                current_utc_time = datetime.utcnow()
+                india_timezone = pytz.timezone('Asia/Kolkata')
+                current_india_time = current_utc_time.replace(tzinfo=pytz.utc).astimezone(india_timezone)
+                # Insert the post into MongoDB
+                content = extract_text_and_images(content)
+
                 # posts_collection.insert_one({'user_id': user_id, 'title': title, 'content': content,'user':session['username'], 'date': current_india_time.strftime('%d %B %Y')  })
                 post_id = posts_collection.insert_one({
                     'user_id': user_id,
@@ -140,6 +194,7 @@ def add_post():
         else:
             return redirect(url_for('login'))
     return render_template('add_post.html')
+    '''
 ########################################-------------------------------------------------
 from flask import send_file
 
@@ -553,13 +608,14 @@ def reset_password():
             return redirect(url_for('login'))
 
     return render_template('reset_password.html')
-
-
-
     # /////////////////////
 
-if __name__ == '__main__':
-    # from waitress import serve
-    # serve(app, host="0.0.0.0", port=8080)
+import webview
 
-    app.run(debug=True, port=5000)
+if __name__ == '__main__':
+    import threading
+    thread = threading.Thread(target=app.run, kwargs={'host': '127.0.0.1', 'port': 5000})
+    thread.daemon = True
+    thread.start()
+    webview.create_window('hackers community', 'http://127.0.0.1:5000')
+    webview.start()
