@@ -610,12 +610,7 @@ def reset_password():
     return render_template('reset_password.html')
     # /////////////////////
 
-import webview
-
-if __name__ == '__main__':
-    import threading
-    thread = threading.Thread(target=app.run, kwargs={'host': '127.0.0.1', 'port': 5000})
-    thread.daemon = True
-    thread.start()
-    webview.create_window('hackers community', 'http://127.0.0.1:5000')
-    webview.start()
+if __name__=="__main__":
+    from waitress import serve
+    app.run(debug=True)
+    
