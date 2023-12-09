@@ -15,7 +15,7 @@ from gridfs import GridFS
 
 # import pymysql
 
-app = Flask(__name__, template_folder=templates)
+app = Flask(__name__)
 
 app.secret_key = 'xyz'
 connection_string = 'mongodb+srv://hackers_co:K9mDEAed8NYtQeLd@blog.xk7q6yw.mongodb.net/'
