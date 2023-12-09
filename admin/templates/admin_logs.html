@@ -5,8 +5,34 @@
     <title>Admin Logs</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+          .box {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .link-box {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 5px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
+    <h1>Manage Logs</h1>
+<div class="box">
+    <div class="link-box">
+        <a href="{{ url_for('admin') }}">Admin Panel</a>
+    </div>
+    <div class="link-box">
+        <a href="{{ url_for('admin_logs') }}">Admin Logs</a>
+    </div>
+    <div class="link-box">
+        <a href="{{ url_for('admin_user_list') }}">User List</a>
+    </div> </div> 
     <div class="container mt-4">
         <h1>Admin Logs</h1>
         <form method="POST">
@@ -34,6 +60,7 @@
             <tbody>
                 {% for log in logs %}
                     <tr>
+                       
                         <td>{{ log.timestamp }}</td>
                         <td>{{ log.activity }}</td>
                     </tr>

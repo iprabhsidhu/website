@@ -99,7 +99,7 @@
                         {% for part in post['content'] %}
                             {% if part['type'] == 'image' %}
                                 <!-- Display the image if the part is an image -->
-                                <img src="{{ part['content'] }}" alt="Image">
+                                <a href="{{ part['content'] }}" >Click Here</a>
                             {% else %}
                                 <!-- Display the text if the part is text -->
                                 <div class="projcard-description">{{ part['content'] }}</div>

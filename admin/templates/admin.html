@@ -18,9 +18,12 @@
         </tr>
         {% for post in posts %}
         <tr>
+           
             <td>{{ post._id }}</td>
             <td>{{ post.title }}</td>
             <td>{{ post.content }}</td>
+            <!-- <td>{{ for item in post.content:
+                print(item['content']) }}</td> -->
             <td>{{ post.user }}</td>
             <td>
                 <form action="/admin/delete_post/{{ post._id }}" method="post">

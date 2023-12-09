@@ -143,7 +143,7 @@ def add_post():
                 
                 # Log the posting activity after the post is successfully added
                 log_activity = f"User '{session['username']}' added a new post titled '{title}'"
-                log_entry = {'timestamp': current_india_time, 'activity': log_activity}
+                log_entry = {'log_type': 'posting','timestamp': current_india_time, 'activity': log_activity}
                 logs_collection.insert_one(log_entry)
 
                 return redirect(url_for('index'))
@@ -327,6 +327,7 @@ def redirect_page(post_id):
             ist = pytz.timezone('Asia/Kolkata')
             current_time = datetime.now(ist)
             is_author = post['user'] == username
+
             
             comments_collection.insert_one({
                 'post_id': post_id,
@@ -335,6 +336,9 @@ def redirect_page(post_id):
                 'date': current_time,
                 'Author': is_author
             })
+            log_activity = f"User '{ username }' added a new comment '{comment_content}'"
+            log_entry = {'log_type': 'comments','timestamp': current_time, 'activity': log_activity}
+            logs_collection.insert_one(log_entry)
 
         return redirect(url_for('redirect_page', post_id=post['_id']))
 
@@ -481,9 +485,17 @@ def register():
             session['username'] = username
             session['password'] = password
             session['otp'] = otp
+            current_utc_time = datetime.utcnow()
+            india_timezone = pytz.timezone('Asia/Kolkata')
+            current_india_time = current_utc_time.replace(tzinfo=pytz.utc).astimezone(india_timezone)
+ 
+            log_activity = f"User '{session['username']}' Registered  with email'{session['email']}'"
+            log_entry = {'log_type': 'registration','timestamp': current_india_time, 'activity': log_activity}
+            logs_collection.insert_one(log_entry)
             return render_template('verify_otp.html')
         else:
             return 'Failed to send OTP. Please try again.'
+    
 
     return render_template('register.html')
 

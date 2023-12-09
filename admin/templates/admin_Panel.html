@@ -3,17 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Panel - Posts</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        *{
+            text-decoration: none;
+            font-family: 'Helvetica', Arial, sans-serif;
+           
+        }
+        .box {
+          display: flex;
+          justify-content: space-between;
+      }
+
+      .link-box {
+          flex: 1;
+          border: 1px solid #ccc;
+          padding: 10px;
+          margin: 5px;
+          text-align: center;
+          
+      }
+      a{
+        color:#007bff
+      }
+  </style>
 </head>
 <body>
-    <h1>Manage Posts</h1>
-    <div class="link-box">
-        <a href="{{ url_for('admin') }}">Admin Panel</a>
-    </div>
-        <a href="{{ url_for('admin_logs') }}">Admin Logs</a>
-    </div>
-    <div class="link-box">
-        <a href="{{ url_for('admin_user_list') }}">User List</a>
-    </div>    
+  <h1>Manage Users</h1>
+<div class="box">
+  <div class="link-box">
+      <a href="{{ url_for('admin') }}">Admin Panel</a>
+  </div>
+  <div class="link-box">
+      <a href="{{ url_for('admin_logs') }}">Admin Logs</a>
+  </div>
+  <div class="link-box">
+      <a href="{{ url_for('admin_user_list') }}">User List</a>
+  </div> </div>    
     <table border="1">
         <tr>
             <th>Post ID</th>
@@ -26,7 +52,10 @@
         <tr>
             <td>{{ post._id }}</td>
             <td>{{ post.title }}</td>
-            <td>{{ post.content }}</td>
+            <td>{% for item in post.content %}
+                {{ item['content'] }}
+            {% endfor %}
+            </td>
             <td>{{ post.user }}</td>
             <td>
                 <form action="/admin/delete_post/{{ post._id }}" method="post">
@@ -36,5 +65,7 @@
         </tr>
         {% endfor %}
     </table>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 </body>
 </html>

@@ -151,6 +151,7 @@ h1{
         }
     
         button {
+
             background-color: white;
             color: black;
             font-weight: 600;
@@ -373,10 +374,7 @@ input:checked {
                 {% endfor %}
             </ul>
 
-            <!-- <p>  {{ post['images'][0] }}</p>
-            <p>  {{ post['images'] }}</p> -->
-            <!-- .............. -->
-            <!-- <p>{{ post['content'] }}</p> -->
+           
             {% for part in post['content'] %}
         
             {% if part['type'] == 'image' %}
@@ -394,10 +392,10 @@ input:checked {
         <!-- <p>by: {{ user_document}}</p> -->
         <p>Posted on: {{ post['date']}}</p>
              <p>By: {{ post['user']}}</p>
-             <!-- <p>{{ u}}</p> -->
+          
              <!-- <h1>Files in Dashboard</h1> -->
-             {% if session.logged_in and post.user_id == session.user_id %}
-                <button onclick="openModal()">Delete Post</button>
+             {% if session.logged_in and post.user== session['username'] %}
+                <button  style="background-color: #d9534f;"  onclick="openModal()">Delete Post</button>
                 
                 <div id="id01" class="modal" style="display: none;">
                     <span onclick="closeModal()" class="close" title="Close Modal">×</span>
